@@ -1,9 +1,8 @@
 # Supermarket-Heist-Lost-Aisles
-
 # 🛒 Supermarket Heist: Lost Aisles
 
 > **Co-op First-Person Extraction Horror** на движке Unreal Engine 5 (Blueprints).  
-> Игроки проникают в опасный супермаркет, собирают физический лут в руки и тележки, избегают Безликих Охранников и пытаются выполнив квоту эвакуироваться к фургону.
+> Игроки проникают в опасный супермаркет, собирают физический лут в руки и тележки, избегают Безликих Охранников и пытаются выполнить квоту, эвакуировавшись к фургону.
 
 ---
 
@@ -19,13 +18,39 @@
 1. **Лобби / Фургон:** Спавн игроков, закупка расходников в Терминале за счет квоты.
 2. **Заход в магазин:** Старт 5-минутного таймера текущего Дня.
 3. **Сбор добычи:** Поиск товаров, сортировка по весу (легкий / тяжелый), складывание в тележку.
-4. **Стелс и Выживание:** Избегание зрения Безликих Охранников (реакция на акт кражи).
-5. **События:** Реакция на «Пожарную распродажу» (ивент ИИ-диктора Майка, x1.5 к ценам на 30 сек) или отключение света.
+4. **Стелс и Выживание:** Избегание зрения Безликих Охранников (реакция на факт кражи товара на глазах).
+5. **События:** Реакция на «Пожарную распродажу» (ивент роботизированного диктора **Canya**, x1.5 к ценам на 30 сек) или отключение света.
 6. **Эвакуация:** Возврат к фургону, сдача лута в зону продаж, расчет квоты ($1000 за 3 дня).
 
 ---
 
-## 🏗️ 2. АРХИТЕКТУРА И КЛАССЫ (TECHNICAL ARCHITECTURE)
+## 👥 2. РАСПРЕДЕЛЕНИЕ РОЛЕЙ И ЗАДАЧ В КОМАНДЕ
+
+Чтобы не путаться, кто чем занимается при разработке:
+
+* **Blueprint / Tech Lead (Программирование логики):**
+  * Создание актеров `BP_FirstPersonCharacter`, `BP_LootItem_Base`, `BP_ShoppingCart`.
+  * Настройка сетевой репликации (Server RPC, GameMode, GameState).
+  * Настройка логики касс, таймеров и диктора Canya.
+
+* **Level / Environment Designer (Работа с картой):**
+  * Сборка локации `Product Market` из модульных блоков (стены, полы, кассы, стеллажи).
+  * Настройка NavMesh Bounds Volume (чтобы AI охранник мог ходить).
+  * Настройка освещения (Lumen, RectLights, выключатели).
+
+* **3D / Prop / Asset Artist (Ассеты и материалы):**
+  * Поиск, импорт и подгонка 3D-моделей товаров в `DT_LootItems`.
+  * Настройка коллизий у предметов (Box / Convex Collision) для физики.
+  * Создание/настройка UI-иконки товаров, материалов и текселя.
+
+* **Sound & Game Designer (Звуки и Баланс):**
+  * Нарезка и озвучка реплик диктора **Canya** (ElevenLabs / свой голос).
+  * Подбор звуков шагов, шуршания, падения коробок и эмбиента магазина.
+  * Заполнение цен, веса и редкости товаров в Data Table.
+
+---
+
+## 🏗️ 3. АРХИТЕКТУРА И КЛАССЫ (TECHNICAL ARCHITECTURE)
 
 | Класс / Ассет | Тип | Назначение и Зона ответственности |
 | :--- | :--- | :--- |
@@ -38,34 +63,27 @@
 | `BP_LootDropOff` | Actor | Зона продажи у фургона. Триггер забирает предмет, уничтожает его и начисляет деньги в GameState. |
 | `BP_ShoppingCart` | Actor / Pawn | Физическая тележка с виртуальными слотами (`AttachToComponent`) для транспортировки тяжелого лута. |
 | `BP_GuardAIController` | AI Controller | Поведение охраны: Behavior Tree + AI Perception (Sight). Реагирует на проверку `IsHoldingLoot`. |
-| `BP_StorePhaseManager` | Actor | Управление 3 секциями освещения, дверями морозилки и таймером расширения (+2 мин за ключ-карту). |
+| `BP_StorePhaseManager` | Actor | Управление 3 секциями освещения и логикой диктора **Canya** (Fire Sale). |
 
 ---
 
-## 🛠️ 3. СТЕК И ИНСТРУМЕНТЫ (TOOLS & ASSETS)
-
-* **Движок:** Unreal Engine 5.3+ (Blueprint Only)
-* **Сеть:** Advanced Sessions Plugin (Steam Spacewar AppID 480)
-* **3D & Модели:** Fab / UE Marketplace, Mixamo (персонажи и анимации AI)
-* **Аудио:** FreeSound, ElevenLabs (голос ИИ-диктора Майка)
-* **Версионный контроль:** Git + Git LFS (Обязательно для `.uasset` и `.umap`)
-
----
-
-## 📁 4. СТРУКТУРА ПРОЕКТА (FOLDER STRUCTURE)
+## 📁 4. СТРУКТУРА ПАПОК В UNREAL ENGINE (`/Content/`)
 
 ```text
 Content/
- ├── Core/                # GameMode, GameState, PlayerController, Interfaces (BPI)
+ ├── Core/                # GameMode, GameState, PlayerController, BPI_Interactable
  ├── Characters/
- │    ├── Player/         # BP_FirstPersonCharacter, Enhanced Input Assets
- │    └── Enemies/        # BP_Guard, AI Controllers, Behavior Trees, Blackboards
+ │    ├── Player/         # BP
+
+
+cter, Enhanced Input Assets
+ │    └── Enemies/        # BP_Guard (Faceless Security), AI Controller, Behavior Tree
  ├── Environment/
- │    ├── Architecture/   # Модульные стены, полы, потолки, двери
- │    └── Props/          # Стеллажи, кассы, холодильники, декоры
+ │    ├── Architecture/   # Модульные стены, полы, потолки, кассовые зоны
+ │    └── Props/          # Стеллажи, холодильники, декоры, мусор
  ├── Items/
  │    ├── Data/           # Data Tables (DT_LootItems), Structures (F_LootData)
- │    └── Blueprints/     # BP_LootItem_Base, BP_ShoppingCart, BP_Keycard
+ │    └── Blueprints/     # BP_LootItem_Base, BP_ShoppingCart
  ├── UI/                  # WBP_HUD, WBP_Inventory, WBP_ResultsScreen
- ├── Audio/               # SFX, Эмбиент, Звуки Майка
- └── Maps/                # Test_Bench (Dev map), ProductMarket_Main (MVP Level)
+ ├── Audio/               # SFX, Эмбиент, Голос диктора Canya (Fire Sale Alerts)
+ └── Maps/                # Test_Bench (Dev map), ProductMarket_Main (MVP Level)_FirstPersonChara
