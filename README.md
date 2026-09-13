@@ -2,7 +2,7 @@
 # 🛒 Supermarket Heist: Lost Aisles
 
 > **Co-op First-Person Extraction Horror** на движке Unreal Engine 5 (Blueprints).  
-> Игроки проникают в опасный супермаркет, собирают физический лут в руки и тележки, избегают Безликих Охранников и пытаются выполнить квоту, эвакуировавшись к фургону.
+> Игроки проникают в опасный супермаркет, собирают физический лут в руки или случайно найденные на карте тележки, избегают Безликих Охранников и пытаются выполнить квоту, эвакуировавшись к фургону.
 
 ---
 
@@ -17,7 +17,7 @@
 ### 🔄 Основной игровой цикл (Core Loop)
 1. **Лобби / Фургон:** Спавн игроков, закупка расходников в Терминале за счет квоты.
 2. **Заход в магазин:** Старт 5-минутного таймера текущего Дня.
-3. **Сбор добычи:** Поиск товаров, сортировка по весу (легкий / тяжелый), складывание в тележку.
+3. **Сбор добычи:** Поиск товаров, сортировка по весу (легкий / тяжелый). Поиск случайно спавнящихся тележек для ускорения переноски.
 4. **Стелс и Выживание:** Избегание зрения Безликих Охранников (реакция на факт кражи товара на глазах).
 5. **События:** Реакция на «Пожарную распродажу» (ивент роботизированного диктора **Canya**, x1.5 к ценам на 30 сек) или отключение света.
 6. **Эвакуация:** Возврат к фургону, сдача лута в зону продаж, расчет квоты ($1000 за 3 дня).
@@ -35,8 +35,8 @@
 
 * **Level / Environment Designer (Работа с картой):**
   * Сборка локации `Product Market` из модульных блоков (стены, полы, кассы, стеллажи).
-  * Настройка NavMesh Bounds Volume (чтобы AI охранник мог ходить).
-  * Настройка освещения (Lumen, RectLights, выключатели).
+  * Настройка точек случайного спавна тележек (`TargetPoint_CartSpawn`) и лута.
+  * Настройка NavMesh Bounds Volume (чтобы AI охранник мог ходить) и освещения (Lumen, RectLights).
 
 * **3D / Prop / Asset Artist (Ассеты и материалы):**
   * Поиск, импорт и подгонка 3D-моделей товаров в `DT_LootItems`.
@@ -45,7 +45,7 @@
 
 * **Sound & Game Designer (Звуки и Баланс):**
   * Нарезка и озвучка реплик диктора **Canya** (ElevenLabs / свой голос).
-  * Подбор звуков шагов, шуршания, падения коробок и эмбиента магазина.
+  * Подбор звуков шагов, гремящей тележки, падения коробок и эмбиента магазина.
   * Заполнение цен, веса и редкости товаров в Data Table.
 
 ---
@@ -61,7 +61,7 @@
 | `F_LootData` | Structure | Поля: `ItemName` (Text), `Price` (Float), `WeightType` (Enum: Light/Heavy), `Mesh` (StaticMesh), `Sound` (SoundBase). |
 | `DT_LootItems` | Data Table | Единая база данных всех товаров магазина на основе структуры `F_LootData`. |
 | `BP_LootDropOff` | Actor | Зона продажи у фургона. Триггер забирает предмет, уничтожает его и начисляет деньги в GameState. |
-| `BP_ShoppingCart` | Actor / Pawn | Физическая тележка с виртуальными слотами (`AttachToComponent`) для транспортировки тяжелого лута. |
+| `BP_ShoppingCart` | Actor / Pawn | **Вспомогательный инструмент:** Случайно спавнящаяся тележка с виртуальными слотами (`AttachToComponent`). |
 | `BP_GuardAIController` | AI Controller | Поведение охраны: Behavior Tree + AI Perception (Sight). Реагирует на проверку `IsHoldingLoot`. |
 | `BP_StorePhaseManager` | Actor | Управление 3 секциями освещения и логикой диктора **Canya** (Fire Sale). |
 
@@ -71,19 +71,19 @@
 
 ```text
 Content/
- ├── Core/                # GameMode, GameState, PlayerController, BPI_Interactable
+ ├── Core/
+
+
+# GameMode, GameState, PlayerController, BPI_Interactable
  ├── Characters/
- │    ├── Player/         # BP
-
-
-cter, Enhanced Input Assets
+ │    ├── Player/         # BP_FirstPersonCharacter, Enhanced Input Assets
  │    └── Enemies/        # BP_Guard (Faceless Security), AI Controller, Behavior Tree
  ├── Environment/
  │    ├── Architecture/   # Модульные стены, полы, потолки, кассовые зоны
- │    └── Props/          # Стеллажи, холодильники, декоры, мусор
+ │    └── Props/          # Стеллажи, холодильники, декоры, точки спавна тележек
  ├── Items/
  │    ├── Data/           # Data Tables (DT_LootItems), Structures (F_LootData)
  │    └── Blueprints/     # BP_LootItem_Base, BP_ShoppingCart
  ├── UI/                  # WBP_HUD, WBP_Inventory, WBP_ResultsScreen
  ├── Audio/               # SFX, Эмбиент, Голос диктора Canya (Fire Sale Alerts)
- └── Maps/                # Test_Bench (Dev map), ProductMarket_Main (MVP Level)_FirstPersonChara
+ └── Maps/                # Test_Bench (Dev map), ProductMarket_Main (MVP Level)
