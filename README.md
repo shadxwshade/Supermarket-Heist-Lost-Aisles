@@ -74,12 +74,15 @@
  Создать ⁠BPI_Interactable⁠ с функцией ⁠Interact(Actor* Instigator)⁠.
  Реализовать в ⁠BP_FirstPersonCharacter⁠ трассировку ⁠LineTraceByChannel⁠ по кнопке ⁠E⁠.
  DoD: При наведении на тестовый куб и нажатии ⁠E⁠ прорисовывается отладочная линия и вызывается событие интерфейса.
+ 
  [ ] 1.2. Структура данных лута ⁠F_LootData⁠:
  Создать поля: ⁠ItemName⁠ (Text), ⁠Price⁠ (Float), ⁠WeightType⁠ (Enum: Light/Heavy), ⁠Mesh⁠ (StaticMesh), ⁠DropSound⁠ (SoundBase).
  DoD: Структура компилируется без ошибок и доступна для выбора в параметрах Data Table.
+ 
  [ ] 1.3. База данных ⁠DT_LootItems⁠:
  Создать Data Table на базе ⁠F_LootData⁠. Заполнить мини-набор из 5 тестовых товаров (⁠Milk⁠, ⁠Soda_Can⁠, ⁠TV_Box⁠, ⁠MicroWave⁠, ⁠Cereal_Box⁠).
  DoD: Таблица заполнена валидными ссылками на Static Mesh и цены.
+ 
  [ ] 1.4. Актер ⁠BP_LootItem_Base⁠:
  Настроить ⁠Construction Script⁠: получение строки из ⁠DT_LootItems⁠ по ⁠ItemID⁠ и назначение ⁠StaticMesh⁠.
  Настроить физику: ⁠Simulate Physics = True⁠, ⁠Collision Profile = PhysicsActor⁠.
